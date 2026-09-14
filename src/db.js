@@ -255,6 +255,7 @@ async function init() {
       "김영채",
       "류이브",
       "박지윤",
+      "May",
     ];
     await client.batch(
       SEED_PEOPLE.map((name) => ({
