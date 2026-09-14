@@ -90,87 +90,64 @@ that list and restarting the server).
 
 ## Deploying so teammates can reach it remotely (free, 24/7)
 
-As of 2026, no mainstream PaaS (Render, Fly.io, Koyeb, Railway) has a real
-*free* tier with a persistent disk anymore — free web services on those all
-wipe their filesystem on restart, which would silently delete the SQLite
-database. The one genuinely-free-forever option with real persistent storage
-is a small VM on **Oracle Cloud's Always Free tier** (a full Linux server, no
-time limit, no credit card charge as long as you stay within the free
-limits), fronted by **Caddy** for automatic HTTPS and a free subdomain from
-**DuckDNS** for the URL. `docker-compose.yml` + `Caddyfile` in this repo are
-set up for exactly this.
+**This is live** at **https://doht-project-tracker.vercel.app** — hosted on
+[Vercel](https://vercel.com)'s free tier (serverless, no server to manage,
+auto-scales to zero cost when idle) with data in a free
+[Turso](https://turso.tech) database (`doht-tracker`, SQLite-compatible, so
+`src/db.js` talks to it with the exact same SQL as local dev — see the Stack
+section above). The code lives at
+[github.com/antmskim/doht-project-tracker](https://github.com/antmskim/doht-project-tracker)
+(private repo).
 
-**1. Create the free server** (one-time, via the Oracle Cloud web console —
-this part can't be scripted, it needs your own account):
-
-1. Sign up at [oracle.com/cloud/free](https://www.oracle.com/cloud/free/) (a
-   card is required for identity verification, but you're never charged
-   while you stay within the Always Free limits).
-2. Create a Compute instance: **Ampere A1 (Arm), Always Free-eligible shape**,
-   Ubuntu 22.04 or 24.04, with a **reserved public IP** (also free) so the
-   address never changes on reboot. Download the SSH key it generates.
-3. Under the instance's **Virtual Cloud Network → Security List**, add
-   ingress rules allowing TCP ports **80** and **443** from `0.0.0.0/0` (SSH
-   port 22 is already open by default).
-
-**2. Get a free URL:** sign up at [duckdns.org](https://www.duckdns.org)
-(free, sign in with Google/GitHub) and create a subdomain — e.g.
-`doht-tracker.duckdns.org` — pointed at the instance's public IP. DuckDNS
-subdomains never expire and don't require a domain purchase.
-
-**3. Copy the code to the server** (run this from your own machine, in this
-project's directory — there's no GitHub remote for this repo yet, so a
-direct copy is simplest; `rsync` skips `node_modules`/`data` automatically):
+**To redeploy after making changes:**
 
 ```bash
-rsync -avz --exclude node_modules --exclude data --exclude .git \
-  ./ ubuntu@<public-ip>:~/doht-project-tracker/
+git add -A && git commit -m "..." && git push
+vercel --prod
 ```
 
-**4. Install Docker and start it** (now SSH into the instance:
-`ssh -i your-key.pem ubuntu@<public-ip>`):
+(`git push` alone doesn't auto-deploy yet — that needs Vercel's GitHub App to
+be authorized for this repo once, from the Vercel dashboard's project
+settings → Git → Connect Repository. Until that's done, `vercel --prod` is
+the actual deploy step; running it from a directory already linked via
+`vercel link` — already done here — picks up the right project automatically.)
 
-```bash
-curl -fsSL https://get.docker.com | sudo sh
-sudo usermod -aG docker $USER && newgrp docker
+**Environment variables** are already set on Vercel (`vercel env ls` to see
+them): `APP_PASSCODE`, `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `NODE_ENV`.
+To change the team passcode: `vercel env rm APP_PASSCODE production` then
+`echo "new-passcode" | vercel env add APP_PASSCODE production`, then
+redeploy for it to take effect.
 
-# Oracle's Ubuntu images also firewall ports at the OS level —
-# open the same ports there too:
-sudo iptables -I INPUT -p tcp --dport 80 -j ACCEPT
-sudo iptables -I INPUT -p tcp --dport 443 -j ACCEPT
-sudo netfilter-persistent save 2>/dev/null || true
+**To add a database backup / inspect data directly:** `turso db shell
+doht-tracker` opens a SQL shell against the live production database (e.g.
+`SELECT * FROM tasks;`). `turso db show doht-tracker` prints its URL;
+`turso db tokens create doht-tracker` mints a new auth token if needed.
 
-cd ~/doht-project-tracker
-cat > .env <<'EOF'
-APP_PASSCODE=pick-a-real-passcode-here-not-changeme
-DOMAIN=doht-tracker.duckdns.org
-EOF
+<details>
+<summary>Alternative: self-host with Docker (no Vercel/Turso, keeps SQLite as a local file)</summary>
 
-docker compose up -d --build
-```
+`docker-compose.yml` + `Caddyfile` + `Dockerfile` in this repo run the app
+the traditional way — a real always-on server with a local SQLite file. This
+needs its own persistent Linux server, though; **Oracle Cloud's Always Free
+tier** is the one genuinely-free-forever option with real persistent
+storage (Render/Fly/Koyeb's free tiers all lack persistent disks — a free
+web service there would silently lose the database on every restart).
 
-That's it — `https://doht-tracker.duckdns.org` should be live within a
-minute (Caddy requests its TLS certificate automatically on first request).
+1. Sign up at [oracle.com/cloud/free](https://www.oracle.com/cloud/free/),
+   create an Ampere A1 (Arm) Always Free compute instance with a reserved
+   public IP, and open ports 80/443 in its Security List.
+2. Point a free [DuckDNS](https://www.duckdns.org) subdomain at the
+   instance's IP.
+3. On the instance: `curl -fsSL https://get.docker.com | sudo sh`, open the
+   OS-level firewall too (`sudo iptables -I INPUT -p tcp --dport 80 -j
+   ACCEPT` and the same for 443), `git clone` this repo, create a `.env`
+   with `APP_PASSCODE` and `DOMAIN=your-name.duckdns.org`, then
+   `docker compose up -d --build`. Caddy handles HTTPS automatically.
+
 `tracker_data` is a Docker named volume, so the SQLite file survives
-container restarts, `docker compose down`/`up`, and VM reboots (Docker's
-`restart: unless-stopped` policy brings both containers back automatically
-after a reboot).
-
-To push out code changes later: re-run the `rsync` command from step 3, then
-`ssh` in and run `docker compose up -d --build` again. (If you'd rather use
-`git push`/`git pull` instead of re-rsyncing each time, push this repo to a
-GitHub repo and `git pull` on the server in place of the rsync step — either
-works equally well with this setup.)
-
-**Change the passcode before going live** — `changeme` is fine on localhost,
-but this instance is reachable by anyone with the URL. Note also that login
-has no rate-limiting/lockout, so pick something long and don't post the URL
-anywhere public.
-
-To back up the database, copy the data directory straight out of the running
-container (the app image doesn't include a `sqlite3` CLI, so a plain file
-copy is simplest): `docker compose cp app:/app/data ./backup-$(date +%F)`
-run on the VM, then `scp` that folder back to your own machine.
+restarts and reboots. To back it up:
+`docker compose cp app:/app/data ./backup-$(date +%F)`.
+</details>
 
 <details>
 <summary>Alternative: pay a few dollars/month instead (Fly.io)</summary>
@@ -196,10 +173,20 @@ it directly.
 
 ## How it's organized
 
-- [src/server.js](src/server.js) — Express app: serves `public/` as static
-  files and mounts the API routers under `/api`.
-- [src/db.js](src/db.js) — opens `data/tracker.db`, creates tables on first
-  run, seeds the people list.
+- [src/app.js](src/app.js) — the actual Express app: serves `public/` as
+  static files and mounts the API routers under `/api`. Never calls
+  `.listen()` itself — see the two entry points below.
+- [src/server.js](src/server.js) — local-dev entry point (`npm run
+  dev`/`npm start`): loads `.env`, waits for the database to be ready, then
+  calls `app.listen()`.
+- [api/index.js](api/index.js) + [vercel.json](vercel.json) — the Vercel
+  serverless entry point; just re-exports `src/app.js` for Vercel's Node
+  runtime to call directly per-request, no `.listen()`.
+- [src/db.js](src/db.js) — async SQLite-compatible client
+  (`@libsql/client`); a local file (`data/tracker.db`) unless
+  `TURSO_DATABASE_URL` is set, in which case it talks to that Turso database
+  instead — same code, same SQL, either way. Creates tables and seeds the
+  people list on first call to `db.init()`.
 - [src/routes/](src/routes/) — one router per resource (`auth`, `people`,
   `tasks`, `announcements`, `meetings`, `notifications`, `funds`). Task
   comments live at `/api/tasks/:id/comments` (inside `tasks.js`); announcement
@@ -207,14 +194,15 @@ it directly.
   `announcements.js`).
 - [src/middleware/requireAuth.js](src/middleware/requireAuth.js) — gates
   every `/api/*` route except `/api/auth/*` behind a session cookie.
+- [src/lib/asyncHandler.js](src/lib/asyncHandler.js) — wraps async route
+  handlers so a rejected promise reaches Express's error handler instead of
+  hanging the request (Express 4 doesn't do this on its own).
 - [public/](public/) — the whole frontend: `index.html` + `app.js` (vanilla
   JS, no build step) + `styles.css`.
-- [Dockerfile](Dockerfile) — builds the app image (used by both deploy paths
-  below). [docker-compose.yml](docker-compose.yml) + [Caddyfile](Caddyfile) —
-  the app container plus a Caddy reverse proxy that gets free automatic HTTPS
-  for whatever `DOMAIN` is set to; this is what the Oracle Cloud deploy path
-  runs. [fly.toml](fly.toml) is the Fly.io-specific alternative — the two
-  deploy paths don't share config beyond the Dockerfile.
+- [Dockerfile](Dockerfile) + [docker-compose.yml](docker-compose.yml) +
+  [Caddyfile](Caddyfile) + [fly.toml](fly.toml) — the self-hosted deploy
+  paths (see the collapsed sections above); unused by the live Vercel
+  deployment, which builds straight from `package.json` instead.
 
 ## Logging in
 
