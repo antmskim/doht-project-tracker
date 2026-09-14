@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DOHT</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect rx='22' width='100' height='100' fill='%230d0d10'/%3E%3Ctext x='50' y='68' font-size='54' font-family='sans-serif' font-weight='800' fill='white' text-anchor='middle'%3ED%3C/text%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div id="login-screen" class="screen">
+      <div class="login-hero">
+        <span class="wordmark">DO<span class="wordmark-h">(&ndash;)</span>T</span>
+        <p class="login-tagline">뉴욕에서 콘텐츠와 파트너십을 만들어가는 팀. 하루하루, 꿈을 향해.</p>
+      </div>
+      <form id="login-form" class="login-box">
+        <p>본인을 선택하고 팀 비밀번호를 입력하세요.</p>
+        <select id="login-name" required>
+          <option value="">누구세요?</option>
+        </select>
+        <input
+          type="password"
+          id="passcode-input"
+          placeholder="비밀번호"
+        />
+        <button type="submit" class="btn-primary">입장하기</button>
+        <p id="login-error" class="error" hidden></p>
+      </form>
+    </div>
+
+    <div id="app-screen" class="screen" hidden>
+      <button type="button" id="mobile-menu-btn" class="mobile-menu-btn" title="메뉴">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 4.5h12M2 8h12M2 11.5h12"/></svg>
+      </button>
+      <div id="sidebar-backdrop" class="sidebar-backdrop" hidden></div>
+
+      <div class="app-shell">
+        <aside class="sidebar" id="sidebar">
+          <div class="sidebar-header">
+            <span class="brand-icon">DO<span class="wordmark-h">(&ndash;)</span>T</span>
+            <span class="sidebar-header-name">팀 홈</span>
+          </div>
+
+          <div class="funds-widget">
+            <div class="funds-widget-header">
+              <span class="sidebar-label funds-widget-label">모금 현황</span>
+              <button type="button" id="add-funds-btn" class="funds-add-btn" title="모금액 추가">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2.5v11M2.5 8h11"/></svg>
+              </button>
+            </div>
+            <div class="funds-bar">
+              <div class="funds-bar-fill" id="funds-bar-fill"></div>
+            </div>
+            <div class="funds-amounts">
+              <span id="funds-current">0만원</span>
+              <span class="funds-goal" id="funds-goal">/ 0만원</span>
+            </div>
+          </div>
+
+          <nav class="sidebar-nav">
+            <button type="button" class="tab" data-view="calendar">
+              <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/></svg>
+              캘린더
+            </button>
+            <button type="button" class="tab" data-view="help">
+              <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="8" cy="8" r="6.2"/><path d="M6.1 6.3a1.9 1.9 0 1 1 2.7 1.7c-.5.3-.8.7-.8 1.3v.2"/><circle cx="8" cy="11.3" r="0.15" fill="currentColor" stroke="none"/></svg>
+              <span>도와주세요</span>
+              <span id="help-nav-badge" class="nav-badge" hidden>0</span>
+            </button>
+            <button type="button" class="tab" data-view="announcements">
+              <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 6.5v3a1 1 0 0 0 1 1h1l3.5 2.7V3.8L4 6.5H3a1 1 0 0 0-1 1Z"/><path d="M10.5 5.2a3 3 0 0 1 0 5.6M12.3 3.3a5.6 5.6 0 0 1 0 9.4"/></svg>
+              <span>공지사항</span>
+              <span id="announce-nav-badge" class="nav-badge" hidden>0</span>
+            </button>
+            <a
+              class="tab"
+              href="https://drive.google.com/drive/folders/1vSCgseU1zcEVKxNCXQBv24aqGz3BtUfd"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M6.5 3H3a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V9.5"/><path d="M9 2h5v5M13.5 2.5 7 9"/></svg>
+              자료실
+            </a>
+          </nav>
+
+          <div class="sidebar-section">
+            <div class="sidebar-section-header">
+              <span class="sidebar-label">멤버</span>
+              <span class="sidebar-label-count" id="sidebar-people-count">0</span>
+            </div>
+            <nav class="sidebar-people" id="sidebar-people">
+              <button type="button" class="sidebar-person active" data-value="">
+                <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="6" cy="5.5" r="2.2"/><path d="M2 13c0-2.2 1.8-3.5 4-3.5s4 1.3 4 3.5"/><circle cx="12" cy="6" r="1.7"/><path d="M10.8 9.8c1.8.2 3.2 1.4 3.2 3.2"/></svg>
+                모든 업무
+                <span class="sidebar-person-count" id="sidebar-all-count">0</span>
+              </button>
+              <button type="button" class="sidebar-person" data-value="__unassigned__">
+                <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="2 1.6"><circle cx="8" cy="8" r="6"/></svg>
+                담당자 없음
+                <span class="sidebar-person-count" id="sidebar-unassigned-count">0</span>
+              </button>
+            </nav>
+          </div>
+
+          <div class="sidebar-spacer"></div>
+
+          <div class="sidebar-footer">
+            <div class="notif-wrap">
+              <button type="button" id="notif-bell-btn" class="sidebar-footer-btn" title="알림">
+                <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M4 6.5a4 4 0 0 1 8 0v2.7l1.2 2.1H2.8L4 9.2Z"/><path d="M6.3 12.8a1.7 1.7 0 0 0 3.4 0"/></svg>
+                <span id="notif-badge" class="notif-badge" hidden>0</span>
+              </button>
+            </div>
+            <span id="current-user-chip" class="current-user-chip"></span>
+            <button type="button" id="logout-btn" class="sidebar-footer-btn" title="로그아웃">
+              <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M6 2H3.5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1H6"/><path d="M10.5 11 14 8l-3.5-3M14 8H6"/></svg>
+            </button>
+          </div>
+        </aside>
+
+        <div class="main-area">
+          <main id="board-view" class="view">
+            <header class="view-header">
+              <div>
+                <h1 id="board-title">전체 보드</h1>
+                <div class="view-subtitle" id="board-subtitle"></div>
+              </div>
+              <button type="button" id="new-task-btn" class="btn-primary">
+                <svg class="btn-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2.5v11M2.5 8h11"/></svg>
+                새 작업
+              </button>
+            </header>
+            <div class="view-body">
+              <div class="board" id="board-columns"></div>
+            </div>
+          </main>
+
+          <main id="calendar-view" class="view" hidden>
+            <header class="view-header">
+              <div class="calendar-nav">
+                <button type="button" id="calendar-prev" class="btn-icon-only" title="이전 달">
+                  <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3 5 8l5 5"/></svg>
+                </button>
+                <h1 id="calendar-range-label" class="calendar-range-label"></h1>
+                <button type="button" id="calendar-next" class="btn-icon-only" title="다음 달">
+                  <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 3l5 5-5 5"/></svg>
+                </button>
+                <button type="button" id="calendar-today-btn" class="btn-ghost btn-small">오늘</button>
+              </div>
+              <button type="button" id="new-meeting-btn" class="btn-primary">
+                <svg class="btn-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2.5v11M2.5 8h11"/></svg>
+                주간 미팅
+              </button>
+            </header>
+            <div class="view-body">
+              <div class="calendar-month-grid" id="calendar-month-grid"></div>
+              <div class="calendar-legend">
+                <span class="legend-item"><span class="legend-dot legend-dot-due"></span>마감일</span>
+                <span class="legend-item"><span class="legend-dot legend-dot-meeting"></span>정기 미팅</span>
+              </div>
+            </div>
+          </main>
+
+          <main id="help-view" class="view" hidden>
+            <header class="view-header">
+              <div>
+                <h1>도움이 필요해요</h1>
+                <div class="view-subtitle">담당자와 상관없이, 팀 전체에 도움을 요청한 업무입니다</div>
+              </div>
+            </header>
+            <div class="view-body">
+              <div class="board" id="help-columns"></div>
+            </div>
+          </main>
+
+          <main id="announcements-view" class="view" hidden>
+            <header class="view-header">
+              <h1>공지사항</h1>
+            </header>
+            <div class="view-body">
+              <div class="announcements-wrap">
+                <form id="announcement-form" class="composer">
+                  <div class="composer-header">
+                    <span id="announcement-avatar-slot"></span>
+                    <span id="announcement-author-name" class="composer-author-name"></span>
+                  </div>
+                  <input
+                    type="text"
+                    id="announcement-subject"
+                    class="composer-subject"
+                    placeholder="제목"
+                    required
+                  />
+                  <textarea
+                    id="announcement-message"
+                    class="composer-textarea"
+                    rows="3"
+                    placeholder="소식, 업데이트, 후원 소식 등을 공유해보세요..."
+                    required
+                  ></textarea>
+                  <div class="composer-actions">
+                    <button type="submit" class="btn-primary">게시하기</button>
+                  </div>
+                </form>
+                <div class="announcements" id="announcements-list"></div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+
+      <div id="notif-panel" class="notif-panel" hidden>
+        <div class="notif-panel-header">알림</div>
+        <div id="notif-list" class="notif-list"></div>
+      </div>
+    </div>
+
+    <div id="task-modal" class="modal-overlay" hidden>
+      <div class="modal">
+        <button type="button" class="modal-close" data-close-modal>&times;</button>
+        <div id="task-modal-body"></div>
+      </div>
+    </div>
+
+    <div id="new-task-modal" class="modal-overlay" hidden>
+      <div class="modal">
+        <button type="button" class="modal-close" data-close-modal>&times;</button>
+        <h2>새 작업</h2>
+        <form id="new-task-form">
+          <label>
+            작업 이름
+            <input type="text" id="new-task-name" required />
+          </label>
+          <label>
+            담당자
+            <div class="assignee-picker" id="new-task-assignees"></div>
+          </label>
+          <label>
+            마감일 (선택)
+            <input type="date" id="new-task-due" />
+          </label>
+          <label>
+            메모
+            <textarea id="new-task-notes" rows="3"></textarea>
+          </label>
+          <label>
+            상태
+            <select id="new-task-status">
+              <option value="TODO">할 일</option>
+              <option value="IN_PROGRESS">진행 중</option>
+              <option value="DONE">완료</option>
+            </select>
+          </label>
+          <button type="button" id="new-task-help-toggle" class="help-toggle">
+            <svg class="btn-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="8" cy="8" r="6.2"/><path d="M6.1 6.3a1.9 1.9 0 1 1 2.7 1.7c-.5.3-.8.7-.8 1.3v.2"/><circle cx="8" cy="11.3" r="0.15" fill="currentColor" stroke="none"/></svg>
+            도움이 필요해요
+          </button>
+          <button type="submit" class="btn-primary">작업 만들기</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="new-meeting-modal" class="modal-overlay" hidden>
+      <div class="modal">
+        <button type="button" class="modal-close" data-close-modal>&times;</button>
+        <h2>새 주간 미팅</h2>
+        <form id="new-meeting-form">
+          <label>
+            제목
+            <input type="text" id="new-meeting-title" required />
+          </label>
+          <label>
+            요일
+            <select id="new-meeting-day">
+              <option value="1">월요일</option>
+              <option value="2">화요일</option>
+              <option value="3">수요일</option>
+              <option value="4">목요일</option>
+              <option value="5">금요일</option>
+              <option value="6">토요일</option>
+              <option value="0">일요일</option>
+            </select>
+          </label>
+          <label>
+            시간
+            <input type="time" id="new-meeting-time" value="10:00" required />
+          </label>
+          <button type="submit" class="btn-primary">미팅 추가</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="funds-modal" class="modal-overlay" hidden>
+      <div class="modal">
+        <button type="button" class="modal-close" data-close-modal>&times;</button>
+        <h2>모금액 추가</h2>
+        <form id="funds-form">
+          <label>
+            금액 (만원 단위)
+            <input type="number" id="funds-amount" placeholder="예: 500" min="1" step="1" required />
+          </label>
+          <label>
+            메모 (선택)
+            <input type="text" id="funds-note" placeholder="누구에게서, 어떤 명목으로 등" />
+          </label>
+          <button type="submit" class="btn-primary">추가하기</button>
+        </form>
+      </div>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
